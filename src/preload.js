@@ -1,2 +1,8 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+const { contextBridge, ipcRenderer } = require("electron");
+
+contextBridge.exposeInMainWorld("vpsControl", {
+  hasKeypair: () => ipcRenderer.invoke("key:hasKeypair"),
+  getPublicKey: () => ipcRenderer.invoke("key:getPublicKey"),
+  generateKey: () => ipcRenderer.invoke("key:generate"),
+  generatePass: () => ipcRenderer.invoke("auth:generatePass"),
+});

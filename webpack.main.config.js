@@ -1,10 +1,17 @@
 module.exports = {
-  /**
-   * This is the main entry point for your application, it's the first file
-   * that runs in the main process.
-   */
   entry: "./src/index.js",
-  // Put your normal webpack config below here
+  target: "electron-main",
+  node: {
+    __dirname: false,
+    __filename: false,
+  },
+  // Exclude native modules from bundling — require them at runtime instead
+  externals: {
+    keytar: "commonjs keytar",
+    "fs":   "commonjs fs",
+    "path": "commonjs path",
+    "crypto": "commonjs crypto",
+  },
   module: {
     rules: require("./webpack.rules"),
   },

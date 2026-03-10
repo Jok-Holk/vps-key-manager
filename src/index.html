@@ -2,16 +2,514 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pass Generator</title>
-    <link rel="stylesheet" href="./style.css" />
+    <title>VPS Key Manager</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #06060f;
+        --surface: rgba(255, 255, 255, 0.025);
+        --border: rgba(168, 85, 247, 0.15);
+        --purple: #a855f7;
+        --purple-dim: rgba(168, 85, 247, 0.6);
+        --cyan: #22d3ee;
+        --green: #4ade80;
+        --red: #f87171;
+        --text: #e0e0ff;
+        --muted: rgba(255, 255, 255, 0.38);
+        --mono: "Space Mono", "Courier New", Courier, monospace;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--mono);
+        height: 100vh;
+        overflow: hidden;
+        user-select: none;
+        -webkit-app-region: no-drag;
+      }
+
+      #app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      .screen {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      #screen-setup {
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 40px 32px;
+        text-align: center;
+      }
+      .setup-logo {
+        font-size: 48px;
+        color: var(--purple);
+        text-shadow: 0 0 30px var(--purple-dim);
+        margin-bottom: 8px;
+      }
+      #screen-setup h1 {
+        font-size: 22px;
+        color: var(--purple);
+        text-shadow: 0 0 16px var(--purple-dim);
+        letter-spacing: 0.05em;
+      }
+      .subtitle {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.7;
+        margin: 8px 0 20px;
+      }
+
+      #screen-main {
+        overflow-y: auto;
+      }
+
+      header {
+        padding: 18px 20px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+      }
+      .logo-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(
+          135deg,
+          rgba(168, 85, 247, 0.2),
+          rgba(79, 70, 229, 0.2)
+        );
+        border: 1px solid rgba(168, 85, 247, 0.35);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+      }
+      .logo-text {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--purple);
+        text-shadow: 0 0 14px var(--purple-dim);
+      }
+      .logo-sub {
+        font-size: 9px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        margin-top: 1px;
+      }
+
+      .badge-online {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(74, 222, 128, 0.07);
+        border: 1px solid rgba(74, 222, 128, 0.22);
+        border-radius: 20px;
+        font-size: 10px;
+        color: var(--green);
+        letter-spacing: 0.08em;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
+        animation: pulse 2s infinite;
+      }
+
+      .card {
+        margin: 14px 16px 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .card-header {
+        padding: 11px 16px;
+        border-bottom: 1px solid rgba(168, 85, 247, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .card-title {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .card-tag {
+        font-size: 9px;
+        color: rgba(168, 85, 247, 0.55);
+        letter-spacing: 0.08em;
+      }
+      .card-body {
+        padding: 14px 16px;
+      }
+
+      .btn-primary {
+        padding: 12px 20px;
+        background: linear-gradient(
+          135deg,
+          rgba(168, 85, 247, 0.25),
+          rgba(79, 70, 229, 0.25)
+        );
+        border: 1px solid rgba(168, 85, 247, 0.4);
+        border-radius: 10px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 0.06em;
+        transition: all 0.2s;
+        box-shadow: 0 0 18px rgba(168, 85, 247, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: linear-gradient(
+          135deg,
+          rgba(168, 85, 247, 0.38),
+          rgba(79, 70, 229, 0.32)
+        );
+        box-shadow: 0 0 28px rgba(168, 85, 247, 0.32);
+        transform: translateY(-1px);
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .btn-primary.full {
+        width: 100%;
+      }
+
+      .btn-ghost {
+        padding: 4px 10px;
+        background: transparent;
+        border: 1px solid rgba(168, 85, 247, 0.25);
+        border-radius: 5px;
+        color: var(--purple);
+        font-family: var(--mono);
+        font-size: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-ghost:hover {
+        background: rgba(168, 85, 247, 0.1);
+      }
+
+      .btn-copy {
+        padding: 4px 10px;
+        background: rgba(168, 85, 247, 0.1);
+        border: 1px solid rgba(168, 85, 247, 0.25);
+        border-radius: 5px;
+        color: var(--purple);
+        font-family: var(--mono);
+        font-size: 10px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: all 0.2s;
+      }
+      .btn-copy:hover {
+        background: rgba(168, 85, 247, 0.2);
+      }
+      .btn-copy.copied {
+        color: var(--green);
+        border-color: rgba(74, 222, 128, 0.3);
+        background: rgba(74, 222, 128, 0.08);
+      }
+
+      .cred-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .cred-row {
+        background: rgba(0, 0, 0, 0.28);
+        border: 1px solid rgba(168, 85, 247, 0.12);
+        border-radius: 8px;
+        padding: 9px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .cred-label {
+        font-size: 9px;
+        color: var(--muted);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        width: 30px;
+        flex-shrink: 0;
+      }
+      .cred-value {
+        flex: 1;
+        font-size: 11px;
+        color: var(--cyan);
+        letter-spacing: 0.05em;
+        text-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ttl-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .ttl-label {
+        font-size: 10px;
+        color: var(--muted);
+        width: 48px;
+        flex-shrink: 0;
+      }
+      .ttl-bar-bg {
+        flex: 1;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .ttl-fill {
+        height: 100%;
+        background: var(--purple);
+        box-shadow: 0 0 6px var(--purple-dim);
+        border-radius: 2px;
+        transition:
+          width 1s linear,
+          background 0.5s ease;
+      }
+      .ttl-time {
+        font-size: 10px;
+        color: var(--purple);
+        width: 36px;
+        text-align: right;
+        flex-shrink: 0;
+      }
+
+      .info-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 11px;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: var(--muted);
+      }
+      .info-value {
+        color: var(--text);
+      }
+      .info-value.green {
+        color: var(--green);
+        text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
+      }
+
+      .pubkey-box {
+        margin: 0 16px 14px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(168, 85, 247, 0.15);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .pubkey-box pre {
+        font-family: var(--mono);
+        font-size: 9px;
+        color: var(--cyan);
+        white-space: pre-wrap;
+        word-break: break-all;
+        line-height: 1.6;
+        user-select: text;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 11px;
+        line-height: 1.5;
+        z-index: 999;
+        animation: fadeUp 0.25s ease;
+      }
+      .toast-error {
+        background: rgba(248, 113, 113, 0.1);
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        color: var(--red);
+      }
+      .toast-success {
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.28);
+        color: var(--green);
+      }
+
+      ::-webkit-scrollbar {
+        width: 3px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(168, 85, 247, 0.25);
+        border-radius: 2px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Pass Generator</h1>
-      <button id="getPass">Get Pass</button>
-      <pre id="result"></pre>
+    <div id="app">
+      <div id="screen-setup" class="screen hidden">
+        <div class="setup-logo">⬡</div>
+        <h1>VPS Control</h1>
+        <p class="subtitle">Key Manager v2.0</p>
+        <p class="desc">No keypair found.<br />Generate one to get started.</p>
+        <button id="btn-generate-key" class="btn-primary">
+          Generate Keypair
+        </button>
+      </div>
+
+      <div id="screen-main" class="screen hidden">
+        <header>
+          <div class="logo-row">
+            <span class="logo-icon">⬡</span>
+            <div>
+              <div class="logo-text">VPS Control</div>
+              <div class="logo-sub">Key Manager v2.0</div>
+            </div>
+          </div>
+          <div class="badge-online">
+            <span class="dot"></span> Server Online
+          </div>
+        </header>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">One-Time Access</span>
+            <span class="card-tag">Challenge-Response</span>
+          </div>
+          <div class="card-body">
+            <button id="btn-get-pass" class="btn-primary full">
+              <span id="btn-icon">⚡</span>
+              <span id="btn-text">Generate Key + Pass</span>
+            </button>
+            <div id="cred-grid" class="cred-grid hidden">
+              <div class="cred-row">
+                <span class="cred-label">KEY</span>
+                <span class="cred-value" id="val-key">—</span>
+                <button class="btn-copy" data-target="val-key">Copy</button>
+              </div>
+              <div class="cred-row">
+                <span class="cred-label">PASS</span>
+                <span class="cred-value" id="val-pass">—</span>
+                <button class="btn-copy" data-target="val-pass">Copy</button>
+              </div>
+              <div class="ttl-row">
+                <span class="ttl-label">Expires</span>
+                <div class="ttl-bar-bg">
+                  <div id="ttl-fill" class="ttl-fill"></div>
+                </div>
+                <span id="ttl-time" class="ttl-time">10:00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Device Identity</span>
+            <button id="btn-show-pubkey" class="btn-ghost">Show Key</button>
+          </div>
+          <div class="card-body">
+            <div class="info-row">
+              <span class="info-label">Algorithm</span>
+              <span class="info-value">Ed25519</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Storage</span>
+              <span class="info-value green">OS Keychain ✓</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Status</span>
+              <span class="info-value" id="key-status">—</span>
+            </div>
+          </div>
+          <div id="pubkey-box" class="pubkey-box hidden">
+            <pre id="pubkey-text"></pre>
+            <button class="btn-copy" data-target="pubkey-text">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast hidden"></div>
     </div>
-    <script src="./renderer.js"></script>
   </body>
 </html>
