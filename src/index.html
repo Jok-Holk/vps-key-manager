@@ -3,7 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <title>VPS Key Manager</title>
+    <script>
+      window.SERVER_URL = "https://console.jokholk.dev";
+    </script>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+
       * {
         box-sizing: border-box;
         margin: 0;
@@ -19,6 +24,7 @@
         --cyan: #22d3ee;
         --green: #4ade80;
         --red: #f87171;
+        --amber: #f59e0b;
         --text: #e0e0ff;
         --muted: rgba(255, 255, 255, 0.38);
         --mono: "Space Mono", "Courier New", Courier, monospace;
@@ -49,6 +55,7 @@
         display: none !important;
       }
 
+      /* Setup */
       #screen-setup {
         align-items: center;
         justify-content: center;
@@ -81,6 +88,7 @@
         margin: 8px 0 20px;
       }
 
+      /* Main */
       #screen-main {
         overflow-y: auto;
       }
@@ -128,7 +136,7 @@
         margin-top: 1px;
       }
 
-      .badge-online {
+      .badge-server {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -137,18 +145,19 @@
         border: 1px solid rgba(74, 222, 128, 0.22);
         border-radius: 20px;
         font-size: 10px;
-        color: var(--green);
         letter-spacing: 0.08em;
       }
       .dot {
         width: 6px;
         height: 6px;
         border-radius: 50%;
-        background: var(--green);
+        background: #4ade80;
         box-shadow: 0 0 8px rgba(74, 222, 128, 0.9);
         animation: pulse 2s infinite;
+        flex-shrink: 0;
       }
 
+      /* Cards */
       .card {
         margin: 14px 16px 0;
         background: var(--surface);
@@ -178,6 +187,7 @@
         padding: 14px 16px;
       }
 
+      /* Buttons */
       .btn-primary {
         padding: 12px 20px;
         background: linear-gradient(
@@ -231,6 +241,10 @@
       .btn-ghost:hover {
         background: rgba(168, 85, 247, 0.1);
       }
+      .btn-ghost:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
 
       .btn-copy {
         padding: 4px 10px;
@@ -253,6 +267,7 @@
         background: rgba(74, 222, 128, 0.08);
       }
 
+      /* Credentials */
       .cred-grid {
         display: flex;
         flex-direction: column;
@@ -285,8 +300,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        user-select: text;
       }
 
+      /* TTL */
       .ttl-row {
         display: flex;
         align-items: center;
@@ -323,6 +340,7 @@
         flex-shrink: 0;
       }
 
+      /* Info rows */
       .info-row {
         display: flex;
         align-items: center;
@@ -345,6 +363,7 @@
         text-shadow: 0 0 8px rgba(74, 222, 128, 0.4);
       }
 
+      /* Public key */
       .pubkey-box {
         margin: 0 16px 14px;
         background: rgba(0, 0, 0, 0.35);
@@ -365,6 +384,7 @@
         user-select: text;
       }
 
+      /* Toast */
       .toast {
         position: fixed;
         bottom: 16px;
@@ -427,6 +447,7 @@
   </head>
   <body>
     <div id="app">
+      <!-- Setup screen -->
       <div id="screen-setup" class="screen hidden">
         <div class="setup-logo">⬡</div>
         <h1>VPS Control</h1>
@@ -437,6 +458,7 @@
         </button>
       </div>
 
+      <!-- Main screen -->
       <div id="screen-main" class="screen hidden">
         <header>
           <div class="logo-row">
@@ -446,11 +468,13 @@
               <div class="logo-sub">Key Manager v2.0</div>
             </div>
           </div>
-          <div class="badge-online">
-            <span class="dot"></span> Server Online
+          <div id="server-badge" class="badge-server">
+            <span id="server-dot" class="dot"></span>
+            <span id="server-label">Checking...</span>
           </div>
         </header>
 
+        <!-- One-time access card -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">One-Time Access</span>
@@ -483,10 +507,14 @@
           </div>
         </div>
 
+        <!-- Device identity card -->
         <div class="card">
           <div class="card-header">
             <span class="card-title">Device Identity</span>
-            <button id="btn-show-pubkey" class="btn-ghost">Show Key</button>
+            <div style="display: flex; gap: 6px">
+              <button id="btn-recheck" class="btn-ghost">Re-check</button>
+              <button id="btn-show-pubkey" class="btn-ghost">Show Key</button>
+            </div>
           </div>
           <div class="card-body">
             <div class="info-row">
@@ -495,11 +523,15 @@
             </div>
             <div class="info-row">
               <span class="info-label">Storage</span>
-              <span class="info-value green">OS Keychain ✓</span>
+              <span class="info-value green">OS Encrypted ✓</span>
             </div>
             <div class="info-row">
-              <span class="info-label">Status</span>
-              <span class="info-value" id="key-status">—</span>
+              <span class="info-label">Server Auth</span>
+              <span class="info-value" id="key-status">Checking...</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Device</span>
+              <span class="info-value" id="auth-status">—</span>
             </div>
           </div>
           <div id="pubkey-box" class="pubkey-box hidden">
@@ -507,9 +539,60 @@
             <button class="btn-copy" data-target="pubkey-text">Copy</button>
           </div>
         </div>
+
+        <!-- Export / Import card -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Transfer Keypair</span>
+            <span class="card-tag">Export / Import</span>
+          </div>
+          <div class="card-body">
+            <p
+              style="
+                font-size: 10px;
+                color: var(--muted);
+                line-height: 1.6;
+                margin-bottom: 12px;
+              "
+            >
+              Use the same keypair on multiple devices.<br />
+              Export encrypts with a password — import on another machine.
+            </p>
+            <div style="margin-bottom: 10px">
+              <input
+                id="transfer-password"
+                type="password"
+                placeholder="Password for encryption"
+                style="
+                  width: 100%;
+                  background: rgba(0, 0, 0, 0.3);
+                  border: 1px solid var(--border);
+                  border-radius: 6px;
+                  padding: 7px 10px;
+                  color: var(--text);
+                  font-family: var(--mono);
+                  font-size: 11px;
+                  outline: none;
+                  box-sizing: border-box;
+                "
+              />
+            </div>
+            <div style="display: flex; gap: 8px">
+              <button id="btn-export" class="btn-ghost" style="flex: 1">
+                ↑ Export .vpskey
+              </button>
+              <button id="btn-import" class="btn-ghost" style="flex: 1">
+                ↓ Import .vpskey
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div style="height: 16px"></div>
       </div>
 
       <div id="toast" class="toast hidden"></div>
     </div>
+    <script src="./renderer.js"></script>
   </body>
 </html>

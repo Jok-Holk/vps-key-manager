@@ -4,9 +4,9 @@ const SERVER_URL = "https://console.jokholk.dev";
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 480,
-    height: 620,
-    resizable: false,
+    width: 500,
+    height: 900,
+    resizable: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -15,29 +15,30 @@ function createWindow() {
     },
   });
   win.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
-  // win.webContents.openDevTools(); // uncomment to debug
+  // win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
-  // Import keyManager only after app is ready — safeStorage requires app ready
-  const { generateAndStoreKeypair, getPublicKey, hasKeypair, signNonce } = require("./keyManager");
+  // Import after app ready — safeStorage requires app to be ready
+  const {
+    generateAndStoreKeypair,
+    getPublicKey,
+    hasKeypair,
+    signNonce,
+    exportKeypair,
+    importKeypair,
+  } = require("./keyManager");
 
   createWindow();
 
-  ipcMain.handle("key:hasKeypair", async () => {
-    return hasKeypair();
-  });
+  ipcMain.handle("key:hasKeypair", () => hasKeypair());
+  ipcMain.handle("key:getPublicKey", () => getPublicKey());
+  ipcMain.handle("key:generate", () => generateAndStoreKeypair());
+  ipcMain.handle("key:signNonce", (_, nonce) => signNonce(nonce));
+  ipcMain.handle("key:export", (_, password) => exportKeypair(password));
+  ipcMain.handle("key:import", (_, password) => importKeypair(password));
 
-  ipcMain.handle("key:getPublicKey", async () => {
-    return getPublicKey();
-  });
-
-  ipcMain.handle("key:generate", async () => {
-    const { publicKey } = await generateAndStoreKeypair();
-    return { publicKey };
-  });
-
-  // Full challenge-response flow: fetch nonce → sign → verify → receive key+pass
+  // Full challenge-response: fetch nonce → sign → verify → receive one-time key+pass
   ipcMain.handle("auth:generatePass", async () => {
     const nonceRes = await fetch(`${SERVER_URL}/api/auth/nonce`);
     if (!nonceRes.ok) throw new Error("Cannot reach server");
@@ -52,12 +53,11 @@ app.whenReady().then(() => {
     });
 
     if (!verifyRes.ok) {
-      const err = await verifyRes.json();
+      const err = await verifyRes.json().catch(() => ({}));
       throw new Error(err.error ?? "Verification failed");
     }
 
-    const { key, pass } = await verifyRes.json();
-    return { key, pass };
+    return verifyRes.json(); // { key, pass }
   });
 });
 
