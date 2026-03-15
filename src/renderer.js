@@ -4,6 +4,21 @@ function $(id) {
   return document.getElementById(id);
 }
 
+// Server URL — loaded from config on boot, fallback to empty
+window.SERVER_URL = "";
+async function initServerUrl() {
+  const saved = await window.vpsControl.getServerUrl();
+  window.SERVER_URL = saved || "";
+  const input = $("server-url-input");
+  if (input) input.value = window.SERVER_URL;
+  updateServerUrlDisplay();
+}
+
+function updateServerUrlDisplay() {
+  const display = $("server-url-display");
+  if (display) display.textContent = window.SERVER_URL || "(not configured)";
+}
+
 function showToast(msg, isError = true) {
   const t = $("toast");
   t.textContent = msg;
@@ -129,9 +144,30 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Load server URL first
+  await initServerUrl();
+
   // Check server on load, then every 30s
   checkServerStatus();
   setInterval(checkServerStatus, 30000);
+
+  // Server URL save button
+  const btnSaveUrl = $("btn-save-url");
+  if (btnSaveUrl) {
+    btnSaveUrl.addEventListener("click", async () => {
+      const input = $("server-url-input");
+      const url = (input?.value ?? "").trim().replace(/\/+$/, "");
+      if (!url) {
+        showToast("Enter a valid URL");
+        return;
+      }
+      await window.vpsControl.setServerUrl(url);
+      window.SERVER_URL = url;
+      updateServerUrlDisplay();
+      checkServerStatus();
+      showToast("Server URL saved!", false);
+    });
+  }
 
   const hasKey = await window.vpsControl.hasKeypair();
   if (hasKey) {

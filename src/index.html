@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>VPS Key Manager</title>
-    <script>
-      window.SERVER_URL = "https://console.jokholk.dev";
-    </script>
+    <!-- SERVER_URL loaded dynamically from config via renderer.js -->
     <style>
       @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
 
@@ -473,6 +471,60 @@
             <span id="server-label">Checking...</span>
           </div>
         </header>
+
+        <!-- Server URL config -->
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 0.5px solid rgba(168, 85, 247, 0.08);
+          "
+        >
+          <span
+            style="
+              font-size: 9px;
+              color: rgba(255, 255, 255, 0.3);
+              letter-spacing: 0.12em;
+              white-space: nowrap;
+            "
+            >SERVER URL</span
+          >
+          <input
+            id="server-url-input"
+            type="text"
+            placeholder="https://your-domain.com"
+            spellcheck="false"
+            style="
+              flex: 1;
+              background: transparent;
+              border: none;
+              outline: none;
+              font-family: var(--mono);
+              font-size: 11px;
+              color: var(--text);
+              min-width: 0;
+            "
+          />
+          <button
+            id="btn-save-url"
+            style="
+              padding: 3px 10px;
+              background: rgba(168, 85, 247, 0.12);
+              border: 0.5px solid rgba(168, 85, 247, 0.25);
+              border-radius: 5px;
+              color: var(--purple);
+              font-family: var(--mono);
+              font-size: 10px;
+              cursor: pointer;
+              white-space: nowrap;
+            "
+          >
+            Save
+          </button>
+        </div>
 
         <!-- One-time access card -->
         <div class="card">

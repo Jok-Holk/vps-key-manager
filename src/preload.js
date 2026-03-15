@@ -9,4 +9,6 @@ contextBridge.exposeInMainWorld("vpsControl", {
   exportKey: (password) => ipcRenderer.invoke("key:export", password),
   importKey: (password) => ipcRenderer.invoke("key:import", password),
   generatePass: () => ipcRenderer.invoke("auth:generatePass"),
+  getServerUrl: () => ipcRenderer.invoke("config:getServerUrl"),
+  setServerUrl: (url) => ipcRenderer.invoke("config:setServerUrl", url),
 });

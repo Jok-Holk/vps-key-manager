@@ -1,12 +1,37 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
+const electronApp = app;
 
-const SERVER_URL = "https://console.jokholk.dev";
+// Server URL is configurable — stored in electron-store, default empty
+const path = require("path");
+const fs = require("fs");
+
+const configPath = path.join(
+  electronApp?.getPath?.("userData") ?? ".",
+  "config.json",
+);
+
+function loadConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(configPath, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveConfig(data) {
+  try {
+    fs.writeFileSync(configPath, JSON.stringify(data, null, 2));
+  } catch {}
+}
+
+const _config = loadConfig();
+let SERVER_URL = _config.serverUrl ?? "";
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 500,
-    height: 900,
-    resizable: true,
+    width: 480,
+    height: 680,
+    resizable: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -32,6 +57,16 @@ app.whenReady().then(() => {
   createWindow();
 
   ipcMain.handle("key:hasKeypair", () => hasKeypair());
+
+  // Server URL config
+  ipcMain.handle("config:getServerUrl", () => loadConfig().serverUrl ?? "");
+  ipcMain.handle("config:setServerUrl", (_, url) => {
+    const cfg = loadConfig();
+    cfg.serverUrl = url.trim();
+    saveConfig(cfg);
+    SERVER_URL = cfg.serverUrl;
+    return { success: true };
+  });
   ipcMain.handle("key:getPublicKey", () => getPublicKey());
   ipcMain.handle("key:generate", () => generateAndStoreKeypair());
   ipcMain.handle("key:signNonce", (_, nonce) => signNonce(nonce));
