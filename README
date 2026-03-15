@@ -1,0 +1,131 @@
+# VPS Key Manager
+
+> Electron desktop app for authenticating with [vps-manager](https://github.com/Jok-Holk/vps-manager). Generates Ed25519 keypairs, signs server challenges, and issues one-time login credentials.
+
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue) ![Electron](https://img.shields.io/badge/electron-forge-teal)
+
+---
+
+## How it works
+
+This app holds your **Ed25519 private key**, encrypted with OS-level storage (Windows DPAPI / macOS Keychain / libsecret on Linux). The private key never leaves your machine.
+
+```
+1. Open this app → enter your vps-manager URL
+2. Click "Generate Credentials"
+3. App signs a nonce from the server → server returns one-time key+pass
+4. Copy key+pass → paste into vps-manager login page
+5. Credentials expire in 10 minutes
+```
+
+The server only stores your **public key** (`PUBLIC_KEY_ED25519` in Settings). Even if the server is compromised, the private key is safe on your machine.
+
+---
+
+## Setup
+
+### 1. Install
+
+Download the latest release for your platform from [Releases](https://github.com/Jok-Holk/vps-key-manager/releases).
+
+Or build from source:
+
+```bash
+git clone https://github.com/Jok-Holk/vps-key-manager.git
+cd vps-key-manager
+npm install
+npm run make
+```
+
+### 2. Configure server URL
+
+Open the app → enter your vps-manager URL (e.g. `https://console.your-domain.com`) → click **Save**.
+
+### 3. Generate keypair
+
+Click **Generate Keypair** (first run only). This creates an Ed25519 keypair and stores the private key in OS-encrypted storage.
+
+### 4. Register public key on server
+
+The app shows your public key after generation (or click **Show Key** anytime).
+
+Copy it → paste into vps-manager **Settings → Ed25519 Public Key** → Save.
+
+If vps-manager is in first-run setup mode, log in with the setup password from PM2 logs first.
+
+### 5. Login
+
+Click **Generate Credentials** → copy the KEY and PASS → paste into vps-manager login page.
+
+---
+
+## Transfer to another machine
+
+Your keypair is tied to the machine. To use the same key on another computer:
+
+1. Enter the same **transfer password** on both machines
+2. Source machine: click **↑ Export .vpskey** → save the file
+3. Target machine: click **↓ Import .vpskey** → select the file, enter same password
+
+The `.vpskey` file is encrypted with AES-256-GCM. The password is never stored.
+
+---
+
+## First-run flow with vps-manager
+
+```
+New VPS install
+    ↓
+vps-manager starts → prints SETUP PASSWORD in PM2 logs
+    ↓
+Browser → vps-manager login → enter setup password
+    ↓
+Open this app → Generate Keypair → copy public key
+    ↓
+vps-manager Settings → paste PUBLIC_KEY_ED25519 → Save
+    ↓
+Setup password disabled automatically
+    ↓
+From now on: use this app to generate login credentials
+```
+
+---
+
+## Security
+
+- Private key encrypted with OS keychain (DPAPI on Windows, Keychain on macOS)
+- `.vpskey` export encrypted with AES-256-GCM + scrypt key derivation
+- Private key never transmitted — only signatures
+- One-time credentials expire in 10 minutes
+- Server verifies Ed25519 signature before issuing credentials
+
+---
+
+## Build
+
+```bash
+# Development
+npm start
+
+# Package (current platform)
+npm run make
+
+# Package all platforms
+npm run make -- --platform=win32,darwin,linux
+```
+
+Output in `out/` directory.
+
+---
+
+## Author
+
+**Jok-Holk** — [github.com/Jok-Holk](https://github.com/Jok-Holk)
+
+Related: [vps-manager](https://github.com/Jok-Holk/vps-manager)
+
+---
+
+## Bug reports & feedback
+
+Found a bug or have a suggestion? Open an [issue on GitHub](https://github.com/Jok-Holk/vps-key-manager/issues) or email **jokholk.dev@gmail.com**.

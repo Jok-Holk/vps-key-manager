@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="52" fill="#06060f"/>
+  <polygon points="220.66,181.50 128.00,235.00 35.34,181.50 35.34,74.50 128.00,21.00 220.66,74.50" stroke="#a855f7" stroke-width="12" fill="none" stroke-linejoin="round"/>
+  <!-- Key bow (circle) -->
+  <circle cx="104" cy="118" r="30" stroke="#a855f7" stroke-width="10" fill="none"/>
+  <!-- Key shaft -->
+  <rect x="130" y="112" width="72" height="12" rx="4" fill="#a855f7"/>
+  <!-- Key teeth -->
+  <rect x="174" y="124" width="12" height="20" rx="3" fill="#a855f7"/>
+  <rect x="152" y="124" width="12" height="15" rx="3" fill="#a855f7"/>
+</svg>
