@@ -22,9 +22,6 @@ module.exports = {
       name: "@electron-forge/maker-squirrel",
       config: {
         name: "vps_key_manager",
-        setupIcon: path.join(__dirname, "assets", "icon.ico"),
-        iconUrl:
-          "https://raw.githubusercontent.com/Jok-Holk/vps-key-manager/main/assets/icon.ico",
       },
     },
     { name: "@electron-forge/maker-zip", platforms: ["darwin"] },
